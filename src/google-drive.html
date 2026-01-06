@@ -1,23 +1,149 @@
 <script type="text/javascript">
-    RED.nodes.registerType('google-drive', {
+    RED.nodes.registerType('Google Drive', {
         category: 'function',
         color: '#F4B400',
         defaults: {
             name: { value: '' },
+            autoName: { value: '' },
+            googleCredentials: { type: 'google-credentials', required: true },
+            operation: { value: 'write', required: true },
+            folderId: { value: '' },
+            fileId: { value: '' },
+            fileName: { value: '' },
+            folderName: { value: '' },
         },
         inputs: 1,
         outputs: 1,
         icon: 'font-awesome/fa-folder-open-o',
         label: function () {
-            return this.name || 'Google Drive'
+            return this.name || this.autoName || 'Google Drive';
         },
-    })
+        oneditprepare: function () {
+            const node = this;
+            const operationInput = $('#node-input-operation');
+            const folderIdRow = $('#row-folderId');
+            const fileIdRow = $('#row-fileId');
+            const nameInput = $('#node-input-name');
+            const folderIdInput = $('#node-input-folderId');
+            const fileIdInput = $('#node-input-fileId');
+            const googleCredentialsInput = $('#node-input-googleCredentials');
+            const fileNameInput = $('#node-input-fileName');
+            const fileNameRow = $('#row-fileName');
+            const folderNameRow = $('#row-folderName');
+
+            if (node.name) {
+                nameInput.val(node.name);
+            }
+            if (node.folderId) {
+                folderIdInput.val(node.folderId);
+            }
+            if (node.fileId) {
+                fileIdInput.val(node.fileId);
+            }
+            if (node.fileName) {
+                fileNameInput.val(node.fileName);
+            }
+            if (node.googleCredentials) {
+                googleCredentialsInput.val(node.googleCredentials);
+            }
+
+
+
+            function showHidefields() {
+                const operation = operationInput.val();
+                switch (operation) {
+                    case 'create':
+                        fileNameRow.show();
+                        folderIdRow.show();
+                        fileIdRow.hide();
+                        folderNameRow.hide();
+                        node.autoName = 'Create file';
+                        break;
+                    case 'read':
+                        fileNameRow.hide();
+                        folderIdRow.hide();
+                        fileIdRow.show();
+                        folderNameRow.hide();
+                        node.autoName = 'Read file';
+                        break;
+                    case 'update':
+                        fileNameRow.hide();
+                        folderIdRow.hide();
+                        fileIdRow.show();
+                        folderNameRow.hide();
+                        node.autoName = 'Update file';
+                        break;
+                    case 'delete':
+                        fileNameRow.hide();
+                        folderIdRow.hide();
+                        fileIdRow.show();
+                        folderNameRow.hide();
+                        node.autoName = 'Delete file';
+                        break;
+                    case 'list':
+                        fileNameRow.hide();
+                        folderIdRow.show();
+                        fileIdRow.hide();
+                        folderNameRow.hide();
+                        node.autoName = 'List files';
+                        break;
+                    case 'createFolder':
+                        fileNameRow.hide();
+                        folderIdRow.show();
+                        fileIdRow.hide();
+                        folderNameRow.show();
+                        node.autoName = 'Create folder';
+                        break;
+                }
+            }
+
+            operationInput.on('change', showHidefields);
+
+
+            fileNameRow.hide();
+            folderIdRow.hide();
+            fileIdRow.hide();
+            folderNameRow.hide();
+            showHidefields();
+        },
+    });
 </script>
 
-<script type="text/html" data-template-name="google-drive">
+<script type="text/html" data-template-name="Google Drive">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-googleCredentials"><i class="fa fa-cog"></i> Google Credentials</label>
+        <input type="text" id="node-input-googleCredentials" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-cog"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="create">Create file</option>
+            <option value="read">Read file</option>
+            <option value="update">Update file</option>
+            <option value="delete">Delete file</option>
+            <option value="list">List files</option>
+            <option value="createFolder">Create Folder</option>
+        </select>
+    </div>
+    <div class="form-row" id="row-folderId">
+        <label for="node-input-folderId"><i class="fa fa-folder"></i> Folder ID</label>
+        <input type="text" id="node-input-folderId" placeholder="Enter the Google Drive Folder ID" />
+    </div>
+    <div class="form-row" id="row-fileId">
+        <label for="node-input-fileId"><i class="fa fa-file"></i> File ID</label>
+        <input type="text" id="node-input-fileId" placeholder="Enter the Google Drive File ID" />
+    </div>
+    <div class="form-row" id="row-fileName">
+        <label for="node-input-fileName"><i class="fa fa-file-o"></i> File Name</label>
+        <input type="text" id="node-input-fileName" placeholder="Enter the file name (for create operation)" />
+    </div>
+    <div class="form-row" id="row-folderName">
+        <label for="node-input-folderName"><i class="fa fa-folder-o"></i> Folder Name</label>
+        <input type="text" id="node-input-folderName" placeholder="Enter the folder name (for createFolder operation)" />
     </div>
 </script>
 

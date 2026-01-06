@@ -1,48 +1,52 @@
 {
-  "name": "@ivaccari4432/node-red-contrib-google-drive",
-  "version": "0.0.1",
-  "description": "Google drive access nodes for Node-RED",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "nodered": "node ./node_modules/node-red/red.js --settings ./settings.js",
-    "build": "run-s clean tsc copy-non-ts node-doc",
-    "tsc": "tsc",
-    "node-doc": "node ./readme-to-node-docs.js", 
-    "copy-non-ts": "cpy \"src/*.html\" dist",
-    "clean": "rimraf ./dist",
-    "start": "run-s tsc copy-non-ts node-doc nodered"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ivanvaccari/node-red-contrib-google-drive.git"
-  },
-  "author": "",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ivanvaccari/node-red-contrib-google-drive/issues"
-  },
-  "homepage": "https://github.com/ivanvaccari/node-red-contrib-google-drive#readme",
-  "dependencies": {
-    "typescript": "^5.9.3"
-  },
-  "devDependencies": {
-    "@types/node": "^25.0.3",
-    "@types/node-red": "^1.3.5",
-    "cpy-cli": "^6.0.0",
-    "markdown-it": "^14.1.0",
-    "node-html-parser": "^7.0.1",
-    "node-red": "^4.1.2",
-    "npm-run-all2": "^8.0.4",
-    "rimraf": "^6.1.2"
-  },
-  "node-red": {
-    "nodes": {
-      "google-drive": "./dist/google-drive.js"
-    }
-  },
-  "keywords": [
-    "node-red",
-    "google",
-    "drive"
-  ]
+    "name": "@ivaccari4432/node-red-contrib-google-drive",
+    "version": "0.0.1",
+    "description": "Google drive access nodes for Node-RED",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "nodered": "node ./node_modules/node-red/red.js --settings ./settings.js",
+        "build": "run-s clean tsc copy-non-ts node-doc",
+        "debug-task": "run-s tsc copy-non-ts",
+        "tsc": "tsc",
+        "node-doc": "node ./readme-to-node-docs.js",
+        "copy-non-ts": "cpy \"src/*.html\" dist",
+        "clean": "rimraf ./dist",
+        "start": "run-s tsc copy-non-ts node-doc nodered"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ivanvaccari/node-red-contrib-google-drive.git"
+    },
+    "author": "",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ivanvaccari/node-red-contrib-google-drive/issues"
+    },
+    "homepage": "https://github.com/ivanvaccari/node-red-contrib-google-drive#readme",
+    "dependencies": {
+        "google-auth-library": "^10.5.0",
+        "googleapis": "^169.0.0",
+        "typescript": "^5.9.3"
+    },
+    "devDependencies": {
+        "@types/node": "^25.0.3",
+        "@types/node-red": "^1.3.5",
+        "cpy-cli": "^6.0.0",
+        "markdown-it": "^14.1.0",
+        "node-html-parser": "^7.0.1",
+        "node-red": "^4.1.2",
+        "npm-run-all2": "^8.0.4",
+        "rimraf": "^6.1.2"
+    },
+    "node-red": {
+        "nodes": {
+            "google-credentials": "./dist/google-credentials.js",
+            "Google Drive": "./dist/google-drive.js"
+        }
+    },
+    "keywords": [
+        "node-red",
+        "google",
+        "drive"
+    ]
 }

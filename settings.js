@@ -2,6 +2,7 @@ module.exports = {
     userDir:"./userdir",
     flowFile:'./userdir/flows.json',
     nodesDir: [__dirname],
+    credentialSecret: "my_credential_secret",
      /** Configure the logging output */
     logging: {
         /** Only console logging is currently supported */
