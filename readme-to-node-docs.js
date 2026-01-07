@@ -7,7 +7,7 @@ const markdownit = require('markdown-it');
 const fs = require('fs');
 const htmlParser = require('node-html-parser');
 
-const readme = fs.readFileSync('./README.md', 'utf8');
+const readme = fs.readFileSync('./NODE_DOCS.md', 'utf8');
 const googleDriveHtml = fs.readFileSync('./dist/google-drive.html', 'utf8');
 const googleDriveDoc = htmlParser.parse(googleDriveHtml);
 
