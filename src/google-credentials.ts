@@ -38,14 +38,31 @@ function encryptCredentials(key: string, credentials: { [key: string]: any }) {
     return { $: initVector.toString('hex') + cipher.update(JSON.stringify(credentials), 'utf8', 'base64') + cipher.final('base64') };
 }
 
+/**
+ * Google Credentials Node-RED node
+ */
 class GoogleCredentialsNode {
-    static RED: NodeAPI;
-    public oauth2Client: OAuth2Client;
-    private node: Node;
-    // private isAuthenticated: boolean = false;
 
+    /**
+     * Static RED reference for accessing Node-RED APIs
+     */
+    static RED: NodeAPI;
+
+    /**
+     * OAuth2 Client instance
+     */
+    public oauth2Client: OAuth2Client;
+
+    /**
+     * Node instance
+     */
+    private node: Node;
+
+    /**
+     * Construct a Google Credentials Node
+     * @param config 
+     */
     constructor(private config: GoogleCredentialsNodeConfig) {
-        // Initialize the node here
         this.node = this as any as Node;
 
         this.config = config;
@@ -53,9 +70,10 @@ class GoogleCredentialsNode {
 
         GoogleCredentialsNode.RED.nodes.createNode(this.node, config);
 
-        // sets the credentials from the config node
+        // get the credentials from the config node
         let credentials: GoogleCredentials = GoogleCredentialsNode.RED.nodes.getCredentials(this.node.id) as GoogleCredentials;
 
+        // Create the OAuth2 client
         this.oauth2Client = new OAuth2Client(credentials.client_id, credentials.client_secret, this.config.redirect_uri);
 
         // Load tokens from persisted storage then sets them in the OAuth2 client
@@ -88,25 +106,12 @@ class GoogleCredentialsNode {
         this.mountRoutes();
     }
 
-    /*public authenticate() {
-        // sets the credentials from the config node
-        const credentials: Credentials = GoogleCredentialsNode.RED.nodes.getCredentials(this.node.id) as Credentials;
-
-        if (!credentials?.access_token || !credentials.refresh_token) {
-            const errorMessage = '[google-credentials] Missing credentials';
-            this.node.error(errorMessage);
-            console.error(`${errorMessage} for node ID: ${this.node.id}`);
-            return;
-        }
-
-        this.oauth2Client.setCredentials({
-            access_token: credentials.access_token,
-            refresh_token: credentials.refresh_token,
-        });
-
-        this.isAuthenticated = true;
-    }*/
-
+    /**
+     * Uses the refresh token to get a new access token
+     * 
+     * @param credentials The current credentials
+     * @returns 
+     */
     public async refreshToken(credentials: GoogleCredentials) {
         try {
             console.log('[google-credentials] Refreshing access token...');
@@ -193,12 +198,10 @@ class GoogleCredentialsNode {
         return decrypted as GoogleCredentials;
     }
 
-    /*private onInput(msg: any) {
-        // Handle input message
-        msg.payload = msg.payload.toLowerCase();
-        this.node.send(msg);
-    }*/
 
+    /**
+     * Mount some internal routes for OAuth2 flow and status checking
+     */
     private mountRoutes() {
         // ount the route that starts the OAuth2 flow. This is called from the config node edit dialog.
         GoogleCredentialsNode.RED.httpAdmin.get('/google-credentials/auth', (req, res) => {
@@ -344,6 +347,7 @@ class GoogleCredentialsNode {
         });
     }
 }
+
 const _export = function (RED: NodeAPI) {
     GoogleCredentialsNode.RED = RED;
 

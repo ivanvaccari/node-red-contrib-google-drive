@@ -47,4 +47,10 @@ See [NODE_DOCS.md](./NODE_DOCS.md) for detailed documentation of each node and i
 
 ## Usage examples
 
-TODO
+### Create and read back the file
+Create a file in a specified folder and read it back.
+
+
+![./examples/create-read.png](./examples/create-read.png)
+
+[JSON flow here](./examples/create-read.json)

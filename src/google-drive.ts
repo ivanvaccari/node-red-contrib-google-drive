@@ -6,39 +6,100 @@ import mime from 'mime-types';
 import stream from 'stream';
 
 type GoogleDriveNodeConfig = NodeDef & {
+
+    /**
+     * OAuth2 Redirect uri
+     */
     redirect_uri: string;
+
+    /**
+     * OAuth2 scopes
+     */
     scopes: string;
+
+    /**
+     * Node name defined by the user
+     */
     name: string;
+
+    /**
+     * Auto-generate file name if not provided
+     */
     autoName: string;
+
+    /**
+     * Google Credentials config node ID
+     */
     googleCredentials: string;
+
+    /**
+     * Operation to perform
+     */
     operation: 'create' | 'read' | 'update' | 'delete' | 'list' | 'createFolder';
+
+    /**
+     * Folder ID for list and create folder operations
+     */
     folderId: string;
+
+    /**
+     * File ID for read, update, delete operations
+     */
     fileId: string;
+
+    /**
+     * File name for create operation
+     */
     fileName: string;
+
+    /**
+     * Folder name for createFolder operation
+     */
     folderName: string;
 };
 
 class GoogleDriveNode {
+
+    /**
+     * Static RED reference for accessing Node-RED APIs
+     */
     static RED: NodeAPI;
+
+    /**
+     * Node instance
+     */
     private node: Node;
 
+    /**
+     * Construct a Google Drive Node
+     * @param config The Node-RED node configuration
+     */
     constructor(private config: GoogleDriveNodeConfig) {
         this.node = this as any as Node;
         GoogleDriveNode.RED.nodes.createNode(this.node, config);
         this.node.on('input', this.onInput.bind(this));
     }
 
+    /**
+     * Handle input messages
+     * @param msg The input message
+     * @param send The send function
+     * @param done The done function
+     * @returns 
+     */
     private async onInput(msg: any, send: (msg: any) => void, done: (err?: Error) => void) {
         // sets the credentials from the config node
         const googleCredentials = GoogleDriveNode.RED.nodes.getCredentials(this.config.googleCredentials) as GoogleCredentials;
         const googleClient = (GoogleDriveNode.RED.nodes.getNode(this.config.googleCredentials) as any)?.oauth2Client as OAuth2Client;
 
+        // Access token and client must be available 
         if (!googleCredentials.access_token || !googleClient) {
             this.node.status({ fill: 'red', shape: 'ring', text: 'Google Credentials not set or invalid.' });
             this.node.error('Google Credentials not set or invalid. Please configure the Google Credentials node.');
             return;
         }
 
+        // Google drive client
         const drive: drive_v3.Drive = google.drive({
             version: 'v3',
             auth: googleClient,
@@ -79,6 +140,8 @@ class GoogleDriveNode {
                 done();
             }
         } catch (error: any) {
+
+            // Any error is catched here and reported
             this.node.status({ fill: 'red', shape: 'ring', text: `Error: ${error.message}` });
             this.node.error(error);
 
@@ -166,7 +229,12 @@ class GoogleDriveNode {
             media: media,
             fields: 'id, name',
         });
-        msg.payload = result.data;
+
+        msg.payload = {
+            fileId: result.data.id, // add fileId for enable direct nodes concatenation (output of one can be directly input of another)
+            ...result.data
+        }
+
         return msg;
     }
 
@@ -182,7 +250,6 @@ class GoogleDriveNode {
             throw new Error('File ID must be specified in config or msg.payload.fileId');
         }
 
-        this.node.error(`Reading file with ID: ${fileId}`);
         const metadata = await drive.files.get({
             fileId: fileId,
             fields: 'mimeType, name',
