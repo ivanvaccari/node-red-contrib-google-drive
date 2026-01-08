@@ -2,16 +2,15 @@
 
 A Node-RED package that provides nodes to interact with Google Drive.
 
-
 ## Features
 - List files in a Google Drive folder
 - Create folders in Google Drive
 - Create, read, update, and delete files in Google Drive
-- Automatic handling og tokens and refresh_tokens
+- Automatic handling of tokens and refresh_tokens
 
 ## Authentication
 
-To authenticate with Google Drive, **you need to create OAuth 2.0 credentials in the Google Cloud Console**.
+To authenticate with Google Drive, **you need to create OAuth 2.0 credentials in the Google Cloud Console**. Please note that You need to have access to the google cloud console with a google account, which means you need to **setup a payment method**, even if you stay within the free tier.
 
 Here's a brief overview of the steps involved:
 - Go to the [Google Cloud Console](https://console.cloud.google.com/).
@@ -47,10 +46,29 @@ See [NODE_DOCS.md](./NODE_DOCS.md) for detailed documentation of each node and i
 
 ## Usage examples
 
-### Create and read back the file
-Create a file in a specified folder and read it back.
+### Create a file and read it back
+Create a file in a specified folder and read it back:
 
+- folderId: ID of the folder to list contents from. Get it from your browser's address bar when you are inside the folder in Google Drive: https://drive.google.com/drive/folders/`<folderId>`
 
 ![./examples/create-read.png](./examples/create-read.png)
 
 [JSON flow here](./examples/create-read.json)
+
+### List content of a directory 
+
+List all files and folders in a specified Google Drive folder:
+
+- folderId: ID of the folder to list contents from. Get it from your browser's address bar when you are inside the folder in Google Drive: https://drive.google.com/drive/folders/`<folderId>`
+
+![./examples/list-files.png](./examples/list-files.png)
+
+[JSON flow here](./examples/list-files.json)
+
+### Delete a file
+Delete a specified file from Google Drive:
+- fileId: ID of the file to delete. Get it from your browser's address bar when you have the file selected in Google Drive: https://drive.google.com/file/d/`<fileId>`/view, or from the output of a "List Files" node.
+
+![./examples/delete-file.png](./examples/delete-file.png)
+
+[JSON flow here](./examples/delete-file.json)

@@ -1,5 +1,5 @@
 {
-    "name": "@ivaccari4432/node-red-contrib-google-drive",
+    "name": "@ivanva/node-red-contrib-google-drive",
     "version": "0.0.1",
     "description": "Google drive access nodes for Node-RED",
     "scripts": {
