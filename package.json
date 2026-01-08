@@ -17,7 +17,7 @@
         "type": "git",
         "url": "git+https://github.com/ivanvaccari/node-red-contrib-google-drive.git"
     },
-    "author": "",
+    "author": "Ivan Vaccari",
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/ivanvaccari/node-red-contrib-google-drive/issues"
@@ -50,5 +50,10 @@
         "node-red",
         "google",
         "drive"
+    ],
+    "files": [
+        "dist",
+        "README.md",
+        "NODE_DOCS.md"
     ]
 }
