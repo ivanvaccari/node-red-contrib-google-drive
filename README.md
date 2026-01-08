@@ -2,6 +2,8 @@
 
 A Node-RED package that provides nodes to interact with Google Drive.
 
+Npm package on npmjs.com: [@ivanva/node-red-contrib-google-drive](https://www.npmjs.com/package/@ivanva/node-red-contrib-google-drive)
+
 ## Features
 - List files in a Google Drive folder
 - Create folders in Google Drive
