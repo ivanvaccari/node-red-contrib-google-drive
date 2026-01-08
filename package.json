@@ -54,6 +54,7 @@
     "files": [
         "dist",
         "README.md",
-        "NODE_DOCS.md"
+        "NODE_DOCS.md",
+        "examples"
     ]
 }
