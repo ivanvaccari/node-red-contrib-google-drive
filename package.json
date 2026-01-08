@@ -13,6 +13,9 @@
         "clean": "rimraf ./dist",
         "start": "run-s tsc copy-non-ts node-doc nodered"
     },
+    "engines": {
+        "node": ">=20.0.0"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ivanvaccari/node-red-contrib-google-drive.git"
@@ -41,6 +44,7 @@
         "rimraf": "^6.1.2"
     },
     "node-red": {
+        "version": ">=4.0.0",
         "nodes": {
             "google-credentials": "./dist/google-credentials.js",
             "Google Drive": "./dist/google-drive.js"
