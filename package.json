@@ -1,6 +1,6 @@
 {
     "name": "@ivanva/node-red-contrib-google-drive",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Google drive access nodes for Node-RED",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
