@@ -51,7 +51,7 @@ See [NODE_DOCS.md](./NODE_DOCS.md) for detailed documentation of each node and i
 ### Create a file and read it back
 Create a file in a specified folder and read it back:
 
-- folderId: ID of the folder to list contents from. Get it from your browser's address bar when you are inside the folder in Google Drive: https://drive.google.com/drive/folders/`<folderId>`
+- folderId: ID of the folder to list contents from. Get it from your browser's address bar when you are inside the folder in Google Drive: `https://drive.google.com/drive/folders/FOLDERID`
 
 ![examples/create-read.png](examples/create-read.png)
 
@@ -61,7 +61,7 @@ Create a file in a specified folder and read it back:
 
 List all files and folders in a specified Google Drive folder:
 
-- folderId: ID of the folder to list contents from. Get it from your browser's address bar when you are inside the folder in Google Drive: https://drive.google.com/drive/folders/`<folderId>`
+- folderId: ID of the folder to list contents from. Get it from your browser's address bar when you are inside the folder in Google Drive: `https://drive.google.com/drive/folders/FOLDERID`
 
 ![examples/list-files.png](examples/list-files.png)
 
@@ -69,7 +69,7 @@ List all files and folders in a specified Google Drive folder:
 
 ### Delete a file
 Delete a specified file from Google Drive:
-- fileId: ID of the file to delete. Get it from your browser's address bar when you have the file selected in Google Drive: https://drive.google.com/file/d/`<fileId>`/view, or from the output of a "List Files" node.
+- fileId: ID of the file to delete. Get it from your browser's address bar when you have the file selected in Google Drive: `https://drive.google.com/file/d/FILEID/view`, or from the output of a "List Files" node.
 
 ![examples/delete-file.png](examples/delete-file.png)
 
