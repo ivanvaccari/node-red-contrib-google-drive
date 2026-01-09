@@ -205,7 +205,6 @@ class GoogleCredentialsNode {
     private mountRoutes() {
         // ount the route that starts the OAuth2 flow. This is called from the config node edit dialog.
         GoogleCredentialsNode.RED.httpAdmin.get('/google-credentials/auth', (req, res) => {
-            console.log('google-credentials/auth');
             const clientId = req.query.clientId as string;
             const nodeId = req.query.id as string;
             const callback = req.query.callback as string;
@@ -213,7 +212,7 @@ class GoogleCredentialsNode {
             const credentials: GoogleCredentials = GoogleCredentialsNode.RED.nodes.getCredentials(nodeId);
             const clientSecret = credentials?.client_secret;
 
-            console.log('credentials', credentials);
+            
             const hasMissingParams = [clientId, clientSecret, nodeId, callback].some((param) => !param);
             if (hasMissingParams) {
                 res.status(400).send('Missing one or more parameters: clientId, clientSecret, nodeId, callback');
@@ -298,7 +297,6 @@ class GoogleCredentialsNode {
                     redirect_uri: redirect_uri,
                 });
 
-                console.log('tokens', tokens);
                 if (!tokens.access_token) {
                     throw new Error('No access token received from Google');
                 }

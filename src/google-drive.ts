@@ -203,17 +203,17 @@ class GoogleDriveNode {
         const folderId = this.config.folderId || msg.payload.folderId || 'root';
         const fileName = this.config.fileName || msg.payload.fileName || 'New File.bin';
 
-        if (!msg.payload || !msg.payload.buffer) {
-            throw new Error('Message payload must contain a buffer property with file data.');
+        if (!msg.payload || !msg.payload.content) {
+            throw new Error('Message payload must contain a content property with file data.');
         }
 
         let fileStream = null;
         if (stream.isReadable(msg.payload.content)) {
             fileStream = msg.payload.content;
-        } else if (Buffer.isBuffer(msg.payload.buffer)) {
-            fileStream = stream.Readable.from(msg.payload.buffer);
+        } else if (Buffer.isBuffer(msg.payload.content)) {
+            fileStream = stream.Readable.from(msg.payload.content);
         } else {
-            fileStream = stream.Readable.from(msg.payload.buffer);
+            fileStream = stream.Readable.from(msg.payload.content);
         }
 
         const fileMetadata = {
@@ -300,17 +300,17 @@ class GoogleDriveNode {
             throw new Error('File ID must be specified in config or msg.payload.fileId');
         }
 
-        if (!msg.payload || !msg.payload.buffer) {
-            throw new Error('Message payload must contain a buffer property with file data.');
+        if (!msg.payload || !msg.payload.content) {
+            throw new Error('Message payload must contain a content property with file data.');
         }
 
         let fileStream = null;
         if (stream.isReadable(msg.payload.content)) {
             fileStream = msg.payload.content;
-        } else if (Buffer.isBuffer(msg.payload.buffer)) {
-            fileStream = stream.Readable.from(msg.payload.buffer);
+        } else if (Buffer.isBuffer(msg.payload.content)) {
+            fileStream = stream.Readable.from(msg.payload.content);
         } else {
-            fileStream = stream.Readable.from(msg.payload.buffer);
+            fileStream = stream.Readable.from(msg.payload.content);
         }
 
         const media = {
