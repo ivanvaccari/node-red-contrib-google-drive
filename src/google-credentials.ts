@@ -329,14 +329,20 @@ class GoogleCredentialsNode {
         // Get method to check authentication status
         GoogleCredentialsNode.RED.httpAdmin.get('/google-credentials/:id/status', (req, res) => {
             const nodeId = req.params.id;
-            const node = GoogleCredentialsNode.RED.nodes.getNode(nodeId) as Node;
+            const node = GoogleCredentialsNode.RED.nodes.getNode(nodeId) as Node & { config: GoogleCredentialsNodeConfig };;
             if (!node || node.type !== 'google-credentials') {
                 console.error(`[google-credentials] Node not found for ID: ${nodeId}`);
                 return res.status(400).send('Node not found');
             }
 
             const credentials = GoogleCredentialsNode.RED.nodes.getCredentials(nodeId) as GoogleCredentials;
+            const isComplete = (!!credentials?.client_id) && (!!node.config?.redirect_uri) && (!!node.config?.scopes) && (!!credentials?.client_secret);
+
             res.json({
+                // Whatever all needed data is present (will be used to enable/disable the "Authorize" button)
+                complete: isComplete,
+
+                // Tokens and expiry info
                 has_access_token: !!credentials?.access_token,
                 has_refresh_token: !!credentials?.refresh_token,
                 expiry_date: credentials?.expiry_date || null,
