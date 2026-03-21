@@ -210,8 +210,6 @@ class GoogleDriveNode {
         let fileStream = null;
         if (stream.isReadable(msg.payload.content)) {
             fileStream = msg.payload.content;
-        } else if (Buffer.isBuffer(msg.payload.content)) {
-            fileStream = stream.Readable.from(msg.payload.content);
         } else {
             fileStream = stream.Readable.from(msg.payload.content);
         }
@@ -307,8 +305,6 @@ class GoogleDriveNode {
         let fileStream = null;
         if (stream.isReadable(msg.payload.content)) {
             fileStream = msg.payload.content;
-        } else if (Buffer.isBuffer(msg.payload.content)) {
-            fileStream = stream.Readable.from(msg.payload.content);
         } else {
             fileStream = stream.Readable.from(msg.payload.content);
         }
