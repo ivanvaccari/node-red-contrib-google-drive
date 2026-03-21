@@ -1,8 +1,8 @@
-import { NodeAPI, Node, NodeDef } from 'node-red';
-import { Credentials, OAuth2Client } from 'google-auth-library';
+import { NodeAPI, Node } from 'node-red';
+import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
 import url from 'url';
-import { flows, storage } from '@node-red/runtime';
+import { storage } from '@node-red/runtime';
 import { GoogleCredentials, GoogleCredentialsNodeConfig } from './types';
 
 var encryptionAlgorithm = 'aes-256-ctr';
@@ -42,7 +42,6 @@ function encryptCredentials(key: string, credentials: { [key: string]: any }) {
  * Google Credentials Node-RED node
  */
 class GoogleCredentialsNode {
-
     /**
      * Static RED reference for accessing Node-RED APIs
      */
@@ -60,7 +59,7 @@ class GoogleCredentialsNode {
 
     /**
      * Construct a Google Credentials Node
-     * @param config 
+     * @param config
      */
     constructor(private config: GoogleCredentialsNodeConfig) {
         this.node = this as any as Node;
@@ -76,41 +75,65 @@ class GoogleCredentialsNode {
         // Create the OAuth2 client
         this.oauth2Client = new OAuth2Client(credentials.client_id, credentials.client_secret, this.config.redirect_uri);
 
-        // Load tokens from persisted storage then sets them in the OAuth2 client
-        // Also sets the credentials in the node-red credential storage
-        this.readPersistedCredentials(this.node.id).then(async (persistedCredentials) => {
-            if (persistedCredentials?.access_token && persistedCredentials?.refresh_token) {
-                // Sets the persised credentials inn the node-red credential storage. This is needed because access_token and refresh_token
-                // are stored in the runtime settings storage to be persistent across restarts, if they were autoupdated, the new values are
-                // in that storage only.
-                credentials = {
-                    ...credentials,
+        // if oauth2Client refreshes the tokens, update the stored credentials
+        this.oauth2Client.on('tokens', async (tokens) => {
+            console.log('[google-credentials] Tokens auto-refreshed');
+            try {
+                const persistedCredentials = await this.readPersistedCredentials(this.node.id);
+                const credentials = {
                     ...persistedCredentials,
+                    ...tokens,
                 };
                 GoogleCredentialsNode.RED.nodes.addCredentials(this.node.id, credentials);
-
-                this.oauth2Client.setCredentials({
-                    access_token: credentials.access_token!,
-                    refresh_token: credentials.refresh_token!,
-                });
-
-                if (credentials.expiry_date && Date.now() > credentials.expiry_date) {
-                    await this.refreshToken(credentials);
-                }
-            } else {
-                const errorMessage = '[google-credentials] Missing access or refresh token';
-                this.node.warn(errorMessage);
+                await this.persistCredentials(this.node.id, credentials);
+            } catch (err: any) {
+                const errorMessage = `Error reading persisted credentials during token refresh: ${err.message}`;
+                this.node.error(errorMessage);
+                console.error(`[google-credentials] ${errorMessage}`);
             }
         });
+
+        // Load tokens from persisted storage then sets them in the OAuth2 client
+        // Also sets the credentials in the node-red credential storage
+        this.readPersistedCredentials(this.node.id)
+            .then(async (persistedCredentials) => {
+                if (persistedCredentials?.access_token && persistedCredentials?.refresh_token) {
+                    // Sets the persised credentials inn the node-red credential storage. This is needed because access_token and refresh_token
+                    // are stored in the runtime settings storage to be persistent across restarts, if they were autoupdated, the new values are
+                    // in that storage only.
+                    credentials = {
+                        ...credentials,
+                        ...persistedCredentials,
+                    };
+                    GoogleCredentialsNode.RED.nodes.addCredentials(this.node.id, credentials);
+
+                    this.oauth2Client.setCredentials({
+                        access_token: credentials.access_token!,
+                        refresh_token: credentials.refresh_token!,
+                    });
+
+                    if (credentials.expiry_date && Date.now() > credentials.expiry_date) {
+                        await this.refreshToken(credentials);
+                    }
+                } else {
+                    const errorMessage = '[google-credentials] Missing access or refresh token';
+                    this.node.warn(errorMessage);
+                }
+            })
+            .catch((err) => {
+                const errorMessage = `Error reading persisted credentials: ${err.message}`;
+                this.node.error(errorMessage);
+                console.error(`[google-credentials] ${errorMessage}`);
+            });
 
         this.mountRoutes();
     }
 
     /**
      * Uses the refresh token to get a new access token
-     * 
+     *
      * @param credentials The current credentials
-     * @returns 
+     * @returns
      */
     public async refreshToken(credentials: GoogleCredentials) {
         try {
@@ -133,6 +156,8 @@ class GoogleCredentialsNode {
             const refresh_token_expires_in = newTokens.refresh_token_expires_in;
             if (refresh_token_expires_in) {
                 credentials.refresh_token_expiry_date = new Date().getTime() + refresh_token_expires_in * 1000;
+            } else {
+                credentials.refresh_token_expiry_date = undefined; // No expiry
             }
 
             console.log('[google-credentials] Access token refreshed successfully');
@@ -155,13 +180,13 @@ class GoogleCredentialsNode {
      *
      * Being said that, i'ts imperative for us to store the updated tokens after refreshing them otherwise at every
      * app reboot we would loose them.
-     * I choose the settings file for these reasonsons:
+     * I choose the settings file for these reasons:
      * - it already includes _credentialSecret encryption key. If this value is leaked, the whole NR instance is compromised anyway.
      * - it is programmatically accessible and writeable from runtime
      * 
      * It's still readable by any node, so bad nodes might abuse this, but at least it's stored encrypted and
      * is stored whatever the storage backend is (file, db, etc)
-
+     *
      * @param nodeId The node id to store the credentials for
      * @param credentials The credentials to store
      */
@@ -198,7 +223,6 @@ class GoogleCredentialsNode {
         return decrypted as GoogleCredentials;
     }
 
-
     /**
      * Mount some internal routes for OAuth2 flow and status checking
      */
@@ -212,7 +236,6 @@ class GoogleCredentialsNode {
             const credentials: GoogleCredentials = GoogleCredentialsNode.RED.nodes.getCredentials(nodeId);
             const clientSecret = credentials?.client_secret;
 
-            
             const hasMissingParams = [clientId, clientSecret, nodeId, callback].some((param) => !param);
             if (hasMissingParams) {
                 res.status(400).send('Missing one or more parameters: clientId, clientSecret, nodeId, callback');
@@ -312,6 +335,8 @@ class GoogleCredentialsNode {
                 const refresh_token_expires_in = tokens.refresh_token_expires_in;
                 if (refresh_token_expires_in) {
                     credentials.refresh_token_expiry_date = new Date().getTime() + refresh_token_expires_in * 1000;
+                } else {
+                    credentials.refresh_token_expiry_date = undefined; // No expiry
                 }
 
                 delete credentials.csrf_token;
@@ -329,14 +354,14 @@ class GoogleCredentialsNode {
         // Get method to check authentication status
         GoogleCredentialsNode.RED.httpAdmin.get('/google-credentials/:id/status', (req, res) => {
             const nodeId = req.params.id;
-            const node = GoogleCredentialsNode.RED.nodes.getNode(nodeId) as Node & { config: GoogleCredentialsNodeConfig };;
+            const node = GoogleCredentialsNode.RED.nodes.getNode(nodeId) as Node & { config: GoogleCredentialsNodeConfig };
             if (!node || node.type !== 'google-credentials') {
                 console.error(`[google-credentials] Node not found for ID: ${nodeId}`);
                 return res.status(400).send('Node not found');
             }
 
             const credentials = GoogleCredentialsNode.RED.nodes.getCredentials(nodeId) as GoogleCredentials;
-            const isComplete = (!!credentials?.client_id) && (!!node.config?.redirect_uri) && (!!node.config?.scopes) && (!!credentials?.client_secret);
+            const isComplete = !!credentials?.client_id && !!node.config?.redirect_uri && !!node.config?.scopes && !!credentials?.client_secret;
 
             res.json({
                 // Whatever all needed data is present (will be used to enable/disable the "Authorize" button)
