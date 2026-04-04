@@ -142,8 +142,14 @@ class GoogleDriveNode {
         } catch (error: any) {
 
             // Any error is catched here and reported
+            const message = `${error.message}, cause: ${error.cause}`;
             this.node.status({ fill: 'red', shape: 'ring', text: `Error: ${error.message}` });
-            this.node.error(error);
+            console.error(`[google-drive] ${message}`, error);
+            this.node.error({
+                message: error.message,
+                stack: error.stack,
+                cause: JSON.stringify(error.cause ?? '')
+            });
 
             return;
         }

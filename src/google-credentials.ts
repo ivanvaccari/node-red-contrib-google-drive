@@ -79,17 +79,32 @@ class GoogleCredentialsNode {
         this.oauth2Client.on('tokens', async (tokens) => {
             console.log('[google-credentials] Tokens auto-refreshed');
             try {
+                let currentCredentials: GoogleCredentials = GoogleCredentialsNode.RED.nodes.getCredentials(this.node.id) as GoogleCredentials;
                 const persistedCredentials = await this.readPersistedCredentials(this.node.id);
-                const credentials = {
+                const updatedCredentials = {
+                    ...currentCredentials,
                     ...persistedCredentials,
                     ...tokens,
                 };
-                GoogleCredentialsNode.RED.nodes.addCredentials(this.node.id, credentials);
-                await this.persistCredentials(this.node.id, credentials);
-            } catch (err: any) {
-                const errorMessage = `Error reading persisted credentials during token refresh: ${err.message}`;
+
+                // @ts-expect-error ignore typings here
+                const refresh_token_expires_in = tokens.refresh_token_expires_in;
+                if (refresh_token_expires_in) {
+                    updatedCredentials.refresh_token_expiry_date = new Date().getTime() + refresh_token_expires_in * 1000;
+                } else {
+                    updatedCredentials.refresh_token_expiry_date = undefined; // No expiry
+                }
+
+                // Very important: always start from existing credentials because it looks like "addCredentials" replaces the entire set
+                // https://github.com/node-red/node-red/blob/b4eadc5c016fa8e7ecc067003d70202208bd10e1/packages/node_modules/%40node-red/runtime/lib/nodes/credentials.js#L269
+                GoogleCredentialsNode.RED.nodes.addCredentials(this.node.id, updatedCredentials);
+
+                await this.persistCredentials(this.node.id, updatedCredentials);
+                credentials = updatedCredentials;
+            } catch (error: any) {
+                const errorMessage = `Error reading persisted credentials during token refresh: ${error.message}`;
                 this.node.error(errorMessage);
-                console.error(`[google-credentials] ${errorMessage}`);
+                console.error(`[google-credentials] ${errorMessage}`, error);
             }
         });
 
@@ -98,13 +113,16 @@ class GoogleCredentialsNode {
         this.readPersistedCredentials(this.node.id)
             .then(async (persistedCredentials) => {
                 if (persistedCredentials?.access_token && persistedCredentials?.refresh_token) {
-                    // Sets the persised credentials inn the node-red credential storage. This is needed because access_token and refresh_token
+                    // Sets the persised credentials in the node-red credential storage. This is needed because access_token and refresh_token
                     // are stored in the runtime settings storage to be persistent across restarts, if they were autoupdated, the new values are
                     // in that storage only.
                     credentials = {
                         ...credentials,
                         ...persistedCredentials,
                     };
+
+                    // Very important: always start from existing credentials because it looks like "addCredentials" replaces the entire set
+                    // https://github.com/node-red/node-red/blob/b4eadc5c016fa8e7ecc067003d70202208bd10e1/packages/node_modules/%40node-red/runtime/lib/nodes/credentials.js#L269
                     GoogleCredentialsNode.RED.nodes.addCredentials(this.node.id, credentials);
 
                     this.oauth2Client.setCredentials({
@@ -118,12 +136,13 @@ class GoogleCredentialsNode {
                 } else {
                     const errorMessage = '[google-credentials] Missing access or refresh token';
                     this.node.warn(errorMessage);
+
                 }
             })
-            .catch((err) => {
-                const errorMessage = `Error reading persisted credentials: ${err.message}`;
+            .catch((error) => {
+                const errorMessage = `Error reading persisted credentials: ${error.message}`;
                 this.node.error(errorMessage);
-                console.error(`[google-credentials] ${errorMessage}`);
+                console.error(`[google-credentials] ${errorMessage}`, error);
             });
 
         this.mountRoutes();
@@ -162,13 +181,16 @@ class GoogleCredentialsNode {
 
             console.log('[google-credentials] Access token refreshed successfully');
 
+            // Very important: always start from existing credentials because it looks like "addCredentials" replaces the entire set
+            // https://github.com/node-red/node-red/blob/b4eadc5c016fa8e7ecc067003d70202208bd10e1/packages/node_modules/%40node-red/runtime/lib/nodes/credentials.js#L269
             GoogleCredentialsNode.RED.nodes.addCredentials(this.node.id, credentials);
+
             this.oauth2Client.setCredentials(credentials);
-            this.persistCredentials(this.node.id, credentials);
-        } catch (err: any) {
-            const errorMessage = `Error refreshing access token: ${err.message}`;
+            await this.persistCredentials(this.node.id, credentials);
+        } catch (error: any) {
+            const errorMessage = `Error refreshing access token: ${error.message}`;
             this.node.error(errorMessage);
-            console.error(`[google-credentials] ${errorMessage}`);
+            console.error(`[google-credentials] ${errorMessage}`, error);
             return null;
         }
     }
@@ -183,7 +205,7 @@ class GoogleCredentialsNode {
      * I choose the settings file for these reasons:
      * - it already includes _credentialSecret encryption key. If this value is leaked, the whole NR instance is compromised anyway.
      * - it is programmatically accessible and writeable from runtime
-     * 
+     *
      * It's still readable by any node, so bad nodes might abuse this, but at least it's stored encrypted and
      * is stored whatever the storage backend is (file, db, etc)
      *
@@ -203,7 +225,7 @@ class GoogleCredentialsNode {
             refresh_token_expiry_date: credentials.refresh_token_expiry_date,
         });
 
-        storage.saveSettings(settings);
+        await storage.saveSettings(settings);
     }
 
     /**
@@ -264,6 +286,8 @@ class GoogleCredentialsNode {
                 })
             );
 
+            // Very important: always start from existing credentials because it looks like "addCredentials" replaces the entire set
+            // https://github.com/node-red/node-red/blob/b4eadc5c016fa8e7ecc067003d70202208bd10e1/packages/node_modules/%40node-red/runtime/lib/nodes/credentials.js#L269
             GoogleCredentialsNode.RED.nodes.addCredentials(nodeId, credentials);
         });
 
@@ -328,7 +352,14 @@ class GoogleCredentialsNode {
                 if (!tokens.refresh_token) {
                     console.warn(`[google-credentials] No refresh token received from Google for node ID: ${nodeId}`);
                 }
-                credentials.refresh_token = tokens.refresh_token ?? credentials.refresh_token!;
+
+                credentials.refresh_token = tokens.refresh_token ?? credentials.refresh_token ?? null;
+                if (!credentials.refresh_token) {
+                    const message = 'Authorization failed: no refresh token received. Please re-authorize with offline access and consent.';
+                    console.error(`[google-credentials] ${message} Node ID: ${nodeId}`);
+                    return res.status(400).send(message);
+                }
+
                 credentials.expiry_date = tokens.expiry_date || new Date().getTime() + 10 * 365 * 24 * 3600 * 1000;
 
                 // @ts-expect-error ignore typings here
@@ -340,13 +371,16 @@ class GoogleCredentialsNode {
                 }
 
                 delete credentials.csrf_token;
+
+                // Very important: always start from existing credentials because it looks like "addCredentials" replaces the entire set
+                // https://github.com/node-red/node-red/blob/b4eadc5c016fa8e7ecc067003d70202208bd10e1/packages/node_modules/%40node-red/runtime/lib/nodes/credentials.js#L269
                 GoogleCredentialsNode.RED.nodes.addCredentials(nodeId, credentials);
 
-                this.persistCredentials(nodeId, credentials);
+                await this.persistCredentials(nodeId, credentials);
                 res.send('Authorization successful. You can close this window.');
             } catch (error: any) {
                 const errorMessage = `[google-credentials] Error exchanging code for tokens: ${error.message}`;
-                console.error(errorMessage);
+                console.error(`[google-credentials] ${errorMessage}`, error);
                 return res.send('Could not receive tokens');
             }
         });

@@ -37,7 +37,7 @@ Here's a brief overview of the steps involved:
 
 After setting up the OAuth 2.0 credentials, follow these steps to configure the Google Drive node in Node-RED:
 - Drag&drop a Google Drive node into your Node-RED workspace.
-- Double-click the node to open its configuration dialog, then click on the pencil icon next to the "Google Credentials" field to add a new credential.
+- Double-click the node to open its configuration dialog, then click on the **+** icon next to the **Google Credentials** field to add a new credential.
 - Use the data from the previously downloaded JSON file to fill in the required fields:
     - Client ID
     - Client Secret
